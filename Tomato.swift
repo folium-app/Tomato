@@ -6,6 +6,18 @@
 //  Copyright © 2024 Jarrod Norwell. All rights reserved.
 //
 
-class Tomato {
+import Foundation
 
+public actor Tomato {
+    public static var shared = Tomato()
+    
+    public let tomatoObjC = TomatoObjC.shared()
+    
+    public func insertCartridge(from url: URL) {
+        tomatoObjC.insertCartridge(url)
+    }
+    
+    public func loop() {
+        tomatoObjC.loop()
+    }
 }
