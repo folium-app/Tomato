@@ -10,9 +10,7 @@
 
 #include "libgambatte/gambatte.h"
 
-using namespace gambatte;
-
-GB gameboyEmulator;
+gambatte::GB gameboyEmulator;
 
 uint32_t *gbAB = new uint32_t[2064 * 2 * 4], *gbFB;
 
@@ -39,32 +37,11 @@ uint32_t *gbAB = new uint32_t[2064 * 2 * 4], *gbFB;
     double fps = 4194304.0 / 70224.0; // ~60fps
     frameInterval = fps;
     
-    gbFB = (uint32_t *)malloc(160 * 144 * 4);
+    gbFB = new uint32_t[160 * 144 * 4];
 }
 
--(void) loop {
-    NSTimeInterval realTime, emulatedTime = OEMonotonicTime();
-        
-    OESetThreadRealtime(1. / (1. * frameInterval), .007, .03);
-    
-    while (true) {
-        size_t size = 2064;
-        while(gameboyEmulator.runFor((gambatte::uint_least32_t*)gbFB, 160, (gambatte::uint_least32_t*)gbAB, size) == -1 && !_paused) {}
-        
-        NSTimeInterval advance = 1.0 / (1. * frameInterval);
-                
-        emulatedTime += advance;
-        realTime = OEMonotonicTime();
-        
-        if(realTime - emulatedTime > 1.0) {
-            NSLog(@"Synchronizing because we are %g seconds behind", realTime - emulatedTime);
-            emulatedTime = realTime;
-        }
-        OEWaitUntil(emulatedTime);
-        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, 0);
-        
-        if (_buffers != nil)
-            _buffers(gbAB, gbFB);
-    }
+-(ptrdiff_t) step:(uint32_t *)video audio:(uint32_t *)audio {
+    size_t samples = 35112 / 4;
+    return gameboyEmulator.runFor((gambatte::uint_least32_t*)video, 160, (gambatte::uint_least32_t*)audio, samples);
 }
 @end

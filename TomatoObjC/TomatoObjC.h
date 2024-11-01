@@ -78,7 +78,7 @@ BOOL OESetThreadRealtime(NSTimeInterval period, NSTimeInterval computation, NSTi
 @property (nonatomic, strong) void (^buffers) (uint32_t*, uint32_t*);
 
 -(void) insertCartridge:(NSURL *)url;
--(void) loop;
+-(ptrdiff_t) step:(uint32_t*)video audio:(uint32_t*)audio;
 @end
 
 NS_ASSUME_NONNULL_END

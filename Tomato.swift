@@ -16,8 +16,4 @@ public actor Tomato {
     public func insertCartridge(from url: URL) {
         tomatoObjC.insertCartridge(url)
     }
-    
-    public func loop() {
-        tomatoObjC.loop()
-    }
 }
