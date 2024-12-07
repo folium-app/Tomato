@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include <zlib.h>
-#include "ioapi.h"
+#include "libgambatte/file/unzip/ioapi.h"
 
 
 

@@ -39,7 +39,7 @@ woven in by Terry Thorsen 1/2003.
 #include <stdlib.h>
 #include <string.h>
 #include <zlib.h>
-#include "unzip.h"
+#include "libgambatte/file/unzip/unzip.h"
 
 #ifdef STDC
 #  include <stddef.h>
@@ -153,7 +153,7 @@ typedef struct
 
 
 #ifndef NOUNCRYPT
-#include "crypt.h"
+#include "libgambatte/file/unzip/crypt.h"
 #endif
 
 /* ===========================================================================
