@@ -4,22 +4,6 @@
 import Foundation
 import TomatoObjC
 
-/*
- enum class Key : u8 {
-   A = 0,
-   B = 1,
-   Select = 2,
-   Start = 3,
-   Right = 4,
-   Left = 5,
-   Up = 6,
-   Down = 7,
-   R = 8,
-   L = 9,
-   Count = 10
- };
- */
-
 public enum GBAKey : UInt8 {
     case a = 0
     case b = 1
