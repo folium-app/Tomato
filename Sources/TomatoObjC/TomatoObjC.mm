@@ -101,13 +101,7 @@ void SDLAudioDevice::Close() {
 
 SWVideoDevice::~SWVideoDevice() {}
 
-#include <hqx/hqx.h>
-#include <xbrz/xbrz.h>
-
-std::vector<uint32_t> upscaled(240 * 4 * 160 * 4);
 void SWVideoDevice::Draw(u32* buffer) {
-    // xbrz::scale(4, buffer, upscaled.data(), 240, 160, xbrz::ColorFormat::ARGB);
-    
     if (auto framebuffer = [[TomatoObjC sharedInstance] buffer]) {
         dispatch_async(dispatch_get_main_queue(), ^{
             framebuffer(buffer);
@@ -785,7 +779,6 @@ void EmulatorThread::ProcessMessage(const Message& message) {
 @implementation TomatoObjC
 -(TomatoObjC *) init {
     if (self = [super init]) {
-        hqxInit();
         SDL_SetMainReady();
     } return self;
 }

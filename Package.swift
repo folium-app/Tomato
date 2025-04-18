@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Tomato",
     platforms: [
-        .iOS(.v16),
-        .tvOS(.v16)
+        .iOS(.v15),
+        .tvOS(.v15)
     ],
     products: [
         .library(name: "Tomato", targets: ["Tomato"]),
@@ -15,8 +15,6 @@ let package = Package(
         .library(name: "TomatoObjC", targets: ["TomatoObjC"])
     ],
     dependencies: [
-        .package(url: "https://github.com/jarrodnorwell/HQx", branch: "main"),
-        .package(url: "https://github.com/jarrodnorwell/xBRZ", branch: "main"),
         .package(url: "https://github.com/ctreffs/SwiftSDL2", branch: "master")
     ],
     targets: [
@@ -31,11 +29,9 @@ let package = Package(
             ])
         ]),
         .target(name: "TomatoObjC", dependencies: [
-            .product(name: "HQx", package: "HQx"),
-            .product(name: "xBRZ", package: "xBRZ"),
             "TomatoCXX"
         ], publicHeadersPath: "include")
     ],
-    cLanguageStandard: .c17,
-    cxxLanguageStandard: .cxx17
+    cLanguageStandard: .c2x,
+    cxxLanguageStandard: .cxx2b
 )
