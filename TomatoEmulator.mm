@@ -16,131 +16,104 @@
 #include <nba/log.hpp>
 #include <nba/device/audio_device.hpp>
 
-// #include <SDL2/SDL.h>
-// #include <SDL2/SDL_main.h>
+#include <SDL3/SDL.h>
+#include <vector>
 
 namespace nba {
 
-/*
-struct SDLAudioDevice : AudioDevice {
-    void SetSampleRate(int sample_rate);
-    void SetBlockSize(int buffer_size);
-    void SetPassthrough(SDL_AudioCallback passthrough);
-    void InvokeCallback(s16* stream, int byte_len);
-    
-    auto GetSampleRate() -> int final;
-    auto GetBlockSize() -> int final;
+void SDL3_AudioDeviceCallback(struct SDL3_AudioDevice* audio_device, SDL_AudioStream* stream, int additional_amount, int total_amount);
+
+class SDL3_AudioDevice : public AudioDevice {
+public:
+    int GetSampleRate() final;
+    int GetBlockSize() final;
     bool Open(void* userdata, Callback callback) final;
     void SetPause(bool value) final;
     void Close() final;
     
 private:
-    Callback callback;
-    void* callback_userdata;
-    SDL_AudioCallback passthrough = nullptr;
-    SDL_AudioDeviceID device;
-    SDL_AudioSpec have;
-    int want_sample_rate = 48000;
-    int want_block_size = 2048;
-    bool opened = false;
-    bool paused = false;
+    friend void SDL3_AudioDeviceCallback(SDL3_AudioDevice* audio_device, SDL_AudioStream* stream, int additional_amount, int total_amount);
+    
+    Callback m_callback{};
+    void* m_callback_userdata{};
+    SDL_AudioStream* m_audio_stream{};
+    bool m_opened{};
+    bool m_paused{};
+    std::vector<u8> m_tmp_buffer{};
 };
- */
 
 } // namespace nba
 
 namespace nba {
 
-/*
-void SDLAudioDevice::SetSampleRate(int sample_rate) {
-    want_sample_rate = sample_rate;
+static constexpr int k_sample_rate = 48000;
+
+auto SDL3_AudioDevice::GetSampleRate() -> int {
+    return k_sample_rate;
 }
 
-void SDLAudioDevice::SetBlockSize(int block_size) {
-    want_block_size = block_size;
+auto SDL3_AudioDevice::GetBlockSize() -> int {
+    // TODO: we do not really have a buffer size anymore. Just remove this from the API?
+    return 4096;
 }
 
-void SDLAudioDevice::SetPassthrough(SDL_AudioCallback passthrough) {
-    this->passthrough = passthrough;
-}
-
-void SDLAudioDevice::InvokeCallback(s16* stream, int byte_len) {
-    if(callback) {
-        callback(callback_userdata, stream, byte_len);
-    }
-}
-
-auto SDLAudioDevice::GetSampleRate() -> int {
-    return have.freq;
-}
-
-auto SDLAudioDevice::GetBlockSize() -> int {
-    return have.samples;
-}
-
-bool SDLAudioDevice::Open(void* userdata, Callback callback) {
+bool SDL3_AudioDevice::Open(void* userdata, Callback callback) {
     auto want = SDL_AudioSpec{};
     
-    if(SDL_Init(SDL_INIT_AUDIO) < 0) {
+    if(SDL_Init(SDL_INIT_AUDIO) == false) {
         Log<Error>("Audio: SDL_Init(SDL_INIT_AUDIO) failed.");
         return false;
     }
     
-    want.freq = want_sample_rate;
-    want.samples = want_block_size;
-    want.format = AUDIO_S16;
+    want.freq = GetSampleRate();
+    want.format = SDL_AUDIO_S16;
     want.channels = 2;
     
-    if(passthrough != nullptr) {
-        want.callback = passthrough;
-        want.userdata = this;
-    } else {
-        want.callback = (SDL_AudioCallback)callback;
-        want.userdata = userdata;
-    }
+    m_callback = callback;
+    m_callback_userdata = userdata;
     
-    this->callback = callback;
-    callback_userdata = userdata;
+    m_audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &want, (SDL_AudioStreamCallback)SDL3_AudioDeviceCallback, this);
     
-    device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
-    
-    if(device == 0) {
-        Log<Error>("Audio: SDL_OpenAudioDevice: failed to open audio: %s\n", SDL_GetError());
+    if(m_audio_stream == nullptr) {
+        Log<Error>("Audio: SDL_OpenAudioDeviceStream: failed to open audio: %s\n", SDL_GetError());
         return false;
     }
     
-    opened = true;
+    m_opened = true;
     
-    if(have.format != want.format) {
-        Log<Error>("Audio: SDL_AudioDevice: S16 sample format unavailable.");
-        return false;
-    }
-    
-    if(have.channels != want.channels) {
-        Log<Error>("Audio: SDL_AudioDevice: Stereo output unavailable.");
-        return false;
-    }
-    
-    if(!paused) {
-        SDL_PauseAudioDevice(device, 0);
+    if(!m_paused) {
+        SDL_ResumeAudioStreamDevice(m_audio_stream);
     }
     return true;
 }
 
-void SDLAudioDevice::SetPause(bool value) {
-    if(opened) {
-        SDL_PauseAudioDevice(device, value ? 1 : 0);
+void SDL3_AudioDevice::SetPause(bool value) {
+    if(!m_opened) {
+        return;
+    }
+    
+    if(value) {
+        SDL_PauseAudioStreamDevice(m_audio_stream);
+    } else {
+        SDL_ResumeAudioStreamDevice(m_audio_stream);
     }
 }
 
-void SDLAudioDevice::Close() {
-    if(opened) {
-        SDL_CloseAudioDevice(device);
-        opened = false;
+void SDL3_AudioDevice::Close() {
+    if(m_opened) {
+        SDL_CloseAudioDevice(SDL_GetAudioStreamDevice(m_audio_stream));
+        m_opened = false;
     }
 }
- 
- */
+
+void SDL3_AudioDeviceCallback(SDL3_AudioDevice* audio_device, SDL_AudioStream* stream, int additional_amount, int total_amount) {
+    (void)total_amount;
+    
+    std::vector<u8>& tmp_buffer = audio_device->m_tmp_buffer;
+    tmp_buffer.resize(additional_amount);
+    audio_device->m_callback(audio_device->m_callback_userdata, (s16*)tmp_buffer.data(), additional_amount);
+    SDL_PutAudioStreamData(stream, tmp_buffer.data(), additional_amount);
+}
 
 } // namespace nba
 
@@ -1110,7 +1083,7 @@ void EmulatorThread::ProcessMessage(const Message& message) {
     object.thread = std::make_unique<nba::EmulatorThread>();
     
     object.config = std::make_shared<nba::Config>();
-    // config->audio_dev = std::make_shared<nba::SDLAudioDevice>();
+    object.config->audio_dev = std::make_shared<nba::SDL3_AudioDevice>();
     object.config->video_dev = std::make_shared<SWVideoDevice>();
     
     object.core = nba::CreateCore(object.config);
@@ -1143,7 +1116,7 @@ void EmulatorThread::ProcessMessage(const Message& message) {
 
 -(void) stop {
     object.core = object.thread->Stop();
-    // config->audio_dev->Close();
+    object.config->audio_dev->Close();
     object.config->video_dev->Draw(nullptr);
 }
 
