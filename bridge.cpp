@@ -206,7 +206,6 @@ void tomato::set_setting(SETTING setting, bool value) {
         case SETTING::SKIP_BOOT_SCREEN:
             cntnr_t.config.SkipBootScreen = value;
             break;
-            
         case SETTING::ADJUST_COLOURS:
             cntnr_t.config.GbaAdjustColors = value;
             break;
