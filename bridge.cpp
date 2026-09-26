@@ -72,9 +72,6 @@ void tomato::initialize_paths(void) {
 }
 
 void tomato::initialize_system(void) {
-    FolderUtilities::SetHomeFolder(cntnr_t.tomato_path.string());
-    FolderUtilities::SetFolderOverrides({}, {}, {}, cntnr_t.system_data_path);
-    
     auto mm{std::make_unique<iOSMessageManager>()};
     MessageManager::SetOptions(false, true);
     MessageManager::RegisterMessageManager(mm.get());
@@ -98,6 +95,9 @@ void tomato::destroy_system(void) {
 
 
 void tomato::insert_disc(std::string path) {
+    FolderUtilities::SetHomeFolder(cntnr_t.tomato_path.string());
+    FolderUtilities::SetFolderOverrides({}, {}, {}, cntnr_t.system_data_path);
+    
     cntnr_t.emulator->LoadRom({path}, {});
     cntnr_t.emulator->RegisterInputProvider(cntnr_t.input.get());
 }
