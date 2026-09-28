@@ -150,4 +150,21 @@ public actor TomatoSystem {
         
         return "https://raw.githubusercontent.com/libretro/libretro-thumbnails/refs/heads/master/Nintendo - Game Boy Advance/Named_Boxarts/\(title).png"
     }
+    
+    
+    public nonisolated func saveStatePath(for index: Int) -> String {
+        String(tomato.save_state_path(Int32(index)))
+    }
+    
+    public func saveStateExists(for index: Int) -> Bool {
+        tomato.save_state_exists(Int32(index))
+    }
+    
+    public func saveStateLoad(for index: Int) {
+        tomato.load_state(Int32(index))
+    }
+    
+    public func saveStateSave(for index: Int) {
+        tomato.save_state(Int32(index))
+    }
 }

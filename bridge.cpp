@@ -10,6 +10,7 @@
 
 #include "Shared/EmuSettings.h"
 #include "Shared/MessageManager.h"
+#include "Shared/SaveStateManager.h"
 #include "Utilities/FolderUtilities.h"
 
 #include <atomic>
@@ -218,4 +219,28 @@ void tomato::set_setting(SETTING setting, bool value) {
     }
     
     cntnr_t.emulator->GetSettings()->SetGbaConfig(cntnr_t.config);
+}
+
+
+bool tomato::save_state_exists(int index) {
+    if (const auto& save_state_manager = cntnr_t.emulator->GetSaveStateManager()) {
+        const auto& path{save_state_manager->GetSaveStatePath(index)};
+        return std::filesystem::exists(path) && std::filesystem::file_size(path) > 0;
+    } return false;
+}
+
+std::string tomato::save_state_path(int index) {
+    if (const auto& save_state_manager = cntnr_t.emulator->GetSaveStateManager()) {
+        return save_state_manager->GetSaveStatePath(index);
+    } return {};
+}
+
+void tomato::load_state(int index) {
+    if (const auto& save_state_manager = cntnr_t.emulator->GetSaveStateManager())
+        save_state_manager->LoadState(index);
+}
+
+void tomato::save_state(int index) {
+    if (const auto& save_state_manager = cntnr_t.emulator->GetSaveStateManager())
+        save_state_manager->SaveState(index);
 }
